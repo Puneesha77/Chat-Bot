@@ -110,6 +110,23 @@ class ChatBot {
     resetSendButton() {
         this.sendButton.style.background = 'linear-gradient(135deg, #feca57, #ff9ff3)';
     }
+    async addBotResponse(userMessage) {
+    this.showTypingIndicator();
+    try {
+        const response = await fetch('http://localhost:3000/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage })
+        });
+        const data = await response.json();
+        this.addMessage(data.response, 'bot');
+    } catch (err) {
+        this.addMessage("Sorry, I couldn't reach the server.", 'bot');
+    } finally {
+        this.hideTypingIndicator();
+    }
+}
+
 }
 
 // Initialize the chatbot when the page loads
