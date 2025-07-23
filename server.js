@@ -1,7 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -23,22 +22,26 @@ if (!API_KEY) {
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+// Add middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
 });
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-// ✅ POST /chat route implementation
-app.post('/chat', async (req, res) => {
+// ✅ POST /sendMessage route implementation - PUT API ROUTES FIRST
+app.post('/sendMessage', async (req, res) => {
+  console.log('POST /sendMessage route hit!');
   try {
     const userMessage = req.body.message;
+    
+    if (!userMessage) {
+      return res.status(400).json({ error: "Message is required" });
+    }
 
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
@@ -55,13 +58,22 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running', port: PORT });
 });
 
+// Serve frontend static files - PUT THIS AFTER API ROUTES
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log('📝 Registered routes:');
+  console.log('  GET  /');
+  console.log('  GET  /health');
+  console.log('  POST /sendMessage');
 });

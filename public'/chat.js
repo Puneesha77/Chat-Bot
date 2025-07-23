@@ -35,11 +35,19 @@ class ChatBot {
     this.showTypingIndicator();
 
     try {
-      const response = await fetch('http://localhost:5050/chat', {
+      // Use relative URL instead of absolute localhost URL
+      const response = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: message })
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       this.hideTypingIndicator();
@@ -51,7 +59,7 @@ class ChatBot {
       }
     } catch (error) {
       this.hideTypingIndicator();
-      this.addMessage("Error contacting server.", 'bot');
+      this.addMessage(`Error: ${error.message}`, 'bot');
       console.error("Chat error:", error);
     }
   }
