@@ -1,22 +1,23 @@
-// server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ✅ Load environment variables from .env (must be before using them!)
+// Load .env variables
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 5050;
 const API_KEY = process.env.GEMINI_API_KEY;
 
-// ✅ Debugging: Make sure the key is loaded correctly
-console.log("Loaded KEY:", API_KEY ? "✅ API Key found" : "❌ No API Key");
-
 if (!API_KEY) {
-  console.error("❌ ERROR: GEMINI_API_KEY not found in .env!");
-  process.exit(1); // Stop server if key not loaded
+  console.error("❌ GEMINI_API_KEY not found in .env!");
+  process.exit(1);
 }
 
 const app = express();
@@ -24,47 +25,43 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const genAI = new GoogleGenerativeAI(API_KEY);
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
 
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+// ✅ POST /chat route implementation
 app.post('/chat', async (req, res) => {
   try {
-    console.log("Received chat request:", req.body);
-    
-    const message = req.body.message;
-    if (!message) {
-      return res.status(400).json({ error: 'No message provided' });
-    }
+    const userMessage = req.body.message;
 
-    // ✅ Actual Gemini API call
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const result = await model.generateContent(message);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const result = await model.generateContent(userMessage);
     const response = await result.response;
-    const reply = response.text();
+    const text = response.text();
 
-    console.log("Gemini response:", reply);
-    
-    res.json({ reply: reply });
-    
+    console.log("🔁 Gemini response:", text);
+
+    res.json({ reply: text });
   } catch (err) {
-    console.error("Error in /chat:", err);
-    
-    // Send more detailed error info for debugging
-    if (err.message.includes('API_KEY')) {
-      res.status(401).json({ error: "Invalid API key" });
-    } else if (err.message.includes('quota')) {
-      res.status(429).json({ error: "API quota exceeded" });
-    } else {
-      res.status(500).json({ error: "Internal Server Error", details: err.message });
-    }
+    console.error("Error generating content:", err);
+    res.status(500).json({ error: "Something went wrong." });
   }
 });
 
-// ✅ Health check endpoint
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'Server is running', port: PORT });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

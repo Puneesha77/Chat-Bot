@@ -16,7 +16,6 @@ class ChatBot {
       }
     });
 
-    // Add input animation
     this.chatInput.addEventListener('input', () => {
       if (this.chatInput.value.trim()) {
         this.sendButton.style.background = 'linear-gradient(135deg, #ff6b6b, #feca57)';
@@ -36,37 +35,25 @@ class ChatBot {
     this.showTypingIndicator();
 
     try {
-      // ✅ FIX 1: Change /health to /chat
-      const response = await fetch("http://localhost:5050/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message }),
+      const response = await fetch('http://localhost:5050/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
       });
 
-      // ✅ FIX 2: Better error handling
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
       const data = await response.json();
-      console.log("Server response:", data); // Debug log
+      this.hideTypingIndicator();
 
-      // ✅ FIX 3: Server sends 'reply', not 'response'
-      if (data.reply) {
+      if (data && data.reply) {
         this.addMessage(data.reply, 'bot');
-      } else if (data.error) {
-        this.addMessage(`❌ Error: ${data.error}`, 'bot');
       } else {
-        this.addMessage("⚠️ Empty response from AI.", 'bot');
+        this.addMessage("Sorry, I didn't understand that.", 'bot');
       }
     } catch (error) {
-      this.addMessage("❌ Sorry, an error occurred. Check console for details.", 'bot');
+      this.hideTypingIndicator();
+      this.addMessage("Error contacting server.", 'bot');
       console.error("Chat error:", error);
     }
-
-    this.hideTypingIndicator();
   }
 
   addMessage(message, sender) {
@@ -79,7 +66,6 @@ class ChatBot {
 
     messageElement.appendChild(bubbleElement);
     this.chatMessages.appendChild(messageElement);
-
     this.scrollToBottom();
   }
 
@@ -103,7 +89,6 @@ class ChatBot {
   }
 }
 
-// Initialize the chatbot when the page loads
 document.addEventListener('DOMContentLoaded', () => {
   new ChatBot();
 });
