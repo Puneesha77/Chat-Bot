@@ -18,9 +18,9 @@ class ChatBot {
 
     this.chatInput.addEventListener('input', () => {
       if (this.chatInput.value.trim()) {
-        this.sendButton.style.background = 'linear-gradient(135deg, #ff6b6b, #feca57)';
+        this.sendButton.style.background = 'linear-gradient(135deg, #0116ffff, #1e179f)';
       } else {
-        this.sendButton.style.background = 'linear-gradient(135deg, #feca57, #ff9ff3)';
+        this.sendButton.style.background = 'linear-gradient(135deg, #0015ffff, #1e179f)';
       }
     });
   }
@@ -93,7 +93,7 @@ class ChatBot {
   }
 
   resetSendButton() {
-    this.sendButton.style.background = 'linear-gradient(135deg, #feca57, #ff9ff3)';
+    this.sendButton.style.background = 'linear-gradient(135deg, #2f40ff, #1e179f)';
   }
 }
 
